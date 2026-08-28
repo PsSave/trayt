@@ -103,3 +103,38 @@ body {
   color: var(--muted);
   font-size: 11px;
 }
+
+.quota + .quota {
+  margin-top: 12px;
+}
+
+.quota-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  margin-bottom: 4px;
+}
+
+.quota-percent {
+  font-weight: 700;
+}
+
+.quota-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.quota-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.quota-resets {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+}
