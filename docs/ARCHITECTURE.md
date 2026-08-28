@@ -38,6 +38,16 @@ This boundary exists so that:
 
 See [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md) for a concrete walkthrough.
 
-## Known limitation: no real quota/reset-time data
+## How live quota data actually works (Claude Code)
 
-We looked for a local file with "requests/tokens remaining until reset" for Claude Code on this machine and it does not exist — `~/.claude/stats-cache.json` is a historical aggregate (tokens/sessions/messages per day), not a live quota. `~/.claude/policy-limits.json` is org policy toggles, unrelated to usage quota. There is no evidence Codex CLI exposes this locally either (untested — no local install was available while scaffolding). Until one of these tools exposes that number somewhere reachable, trayt can only show usage, not remaining quota. Don't accept a PR that fakes this number from guessed plan limits — it'll be wrong for too many users' plans to be trustworthy.
+There is no local file with "percent used / resets at" for Claude Code — `~/.claude/stats-cache.json` is a historical aggregate (tokens/sessions/messages per day), and `~/.claude/policy-limits.json` is org policy toggles, unrelated to usage quota. Both were dead ends.
+
+What does work: Claude Code's interactive `/usage` slash command also runs headlessly, via `claude -p "/usage"`. It prints real, live account data — the actual rolling 5-hour session window and weekly cap Anthropic enforces, plus the exact reset time — because it's calling the same thing the interactive REPL does, just non-interactively. `src/main/providers/claude-code.ts` shells out to it and parses the two summary lines.
+
+This is deliberately **not** "call Anthropic's API directly with the account's OAuth token" — that token lives in `~/.claude/.credentials.json`, and a third-party tool reading and using someone's auth credential to hit a private/undocumented endpoint is a meaningfully bigger trust ask than shelling out to a CLI the user already trusts and already has authenticated. `claude -p "/usage"` gets us the same real data through the interface the tool itself exposes for this purpose.
+
+Trade-off we're accepting: this parses human-readable CLI text output, not a stable API contract, so a Claude Code update that changes the wording of those two lines can silently break parsing (`parseUsageOutput` in `claude-code.ts` returns `null` on a mismatch, which is treated as "CLI unusable" and triggers the stats-cache fallback below — it won't crash, but it will silently under-report until someone notices and updates the regex). If Anthropic ever ships a stable machine-readable form of this (a `--json` flag, say), switch to it.
+
+**Fallback:** if the CLI call fails for any reason (not installed, not logged in, timed out, or output didn't parse), the provider falls back to computing today's tokens/sessions/messages from `~/.claude/stats-cache.json`. That fallback is clearly a different, lower-fidelity kind of data (a local historical estimate, not a live quota check) — `UsageSnapshot.source` (`'live' | 'local-estimate'`) exists specifically so the UI can be honest about which one it's showing, and `ProviderCard.tsx` renders each source differently. Don't collapse that distinction to make the UI simpler; a user who thinks they're seeing a live quota when they're actually seeing yesterday's cache would be worse off than the card just saying so.
+
+**Codex CLI:** parked (see README) — no local install was available to check whether it has an equivalent to `/usage`. If you pick this up, look for an interactive slash/status command in Codex CLI first and test whether it also runs non-interactively, the same pattern that worked here — see [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md).

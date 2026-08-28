@@ -4,15 +4,20 @@
 
 Um dashboard de bandeja (system tray) para uso de agentes de codificação com IA — Claude Code, Codex CLI e, eventualmente, outros — para **Linux e Windows**.
 
-**Propósito:** te dar uma visão rápida, direto da bandeja, de quantos tokens você já gastou e quanto ainda tem disponível — por dia e por semana — em vez de precisar vasculhar logs ou um dashboard web toda vez que quiser checar.
+**Propósito:** te dar uma visão rápida, direto da bandeja, de quanto da sua cota de sessão e semanal você já usou — e exatamente quando ela reseta — em vez de precisar vasculhar logs ou um dashboard web toda vez que quiser checar.
 
 ## O que ele mostra hoje, de fato
 
-**Importante, leia antes de abrir uma issue:** nem o Claude Code nem o Codex CLI expõem localmente um número do tipo "faltam X mensagens/tokens até seu limite resetar", e não existe API pública para isso em planos de assinatura. Então a v0.1 **não** é um contador regressivo — é um **dashboard de uso**: tokens, sessões e mensagens por dia, lidos do cache local de cada ferramenta. Um recurso real de "tempo até resetar" está registrado como trabalho futuro e depende da Anthropic/OpenAI exporem esse dado (veja [Adding a provider](docs/ADDING_A_PROVIDER.md) e as issues abertas).
+**Claude Code** — dado real da conta, ao vivo, não é uma estimativa. O `claude` (CLI do Claude Code) tem um slash command `/usage`; descobrimos que ele também roda em modo não-interativo via `claude -p "/usage"`, e imprime exatamente o que o modo interativo mostraria:
 
-Providers atuais:
-- **Claude Code** — lê `~/.claude/stats-cache.json` (já agregado localmente pelo próprio Claude Code).
-- **Codex CLI** — ainda não implementado. Não tínhamos uma instalação local do Codex CLI pra inspecionar seus arquivos de dados enquanto montávamos o projeto. Se você tiver, veja [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md) — essa é a melhor primeira contribuição possível.
+```
+Current session: 8% used · resets Aug 28, 11:50pm (America/Sao_Paulo)
+Current week (all models): 30% used · resets Aug 30, 8am (America/Sao_Paulo)
+```
+
+O trayt executa esse comando e faz o parse dessas duas linhas — são as janelas reais de 5 horas (rolling) e semanal que a Anthropic aplica de fato, lidas direto da sua conta, não um chute ou um cálculo local nosso. Se essa chamada falhar por qualquer motivo (CLI fora do PATH, não logado, versão antiga sem `/usage`), ele cai pra uma estimativa local baseada no `~/.claude/stats-cache.json` (o próprio cache histórico do Claude Code), pra o card degradar com elegância em vez de ficar em branco. Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pra entender o raciocínio completo, incluindo por que não batemos direto na API da Anthropic.
+
+**Codex CLI** — engavetado por enquanto, não é prioridade no momento atual. Se você usa o Codex CLI e quiser achar o equivalente do `/usage` dele, veja [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md) — essa é a melhor primeira contribuição assim que alguém pegar essa frente.
 
 ## Stack
 

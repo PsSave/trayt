@@ -2,9 +2,11 @@
 
 trayt is early — the priorities right now, roughly in order:
 
-1. **New providers.** See [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md). Codex CLI support is the most wanted one and currently a stub.
-2. **A real icon.** `resources/tray-icon.png` is a generated flat-color placeholder (see `scripts/generate-placeholder-icon.mjs`). A proper design, plus a monochrome/template variant for Linux panels that recolor tray icons, would help a lot.
-3. **Packaging polish.** `npm run build:linux` / `build:win` work but haven't been tested across distros (Wayland vs. X11 tray protocols vary) or Windows versions — bug reports with your OS/DE details are useful even without a fix attached.
+1. **A real icon.** `resources/tray-icon.png` is a generated flat-color placeholder (see `scripts/generate-placeholder-icon.mjs`). A proper design, plus a monochrome/template variant for Linux panels that recolor tray icons, would help a lot.
+2. **Packaging polish.** `npm run build:linux` / `build:win` work but haven't been tested across distros (Wayland vs. X11 tray protocols vary) or Windows versions — bug reports with your OS/DE details are useful even without a fix attached.
+3. **Codex CLI support.** Currently parked, not the current milestone's focus — but it's a stub (`src/main/providers/codex.ts`) waiting for someone who has it installed. See [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md).
+
+Also worth knowing: the Claude Code provider parses `claude -p "/usage"`'s human-readable text output (see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)), which is inherently a bit fragile — if a Claude Code update changes that wording, please open an issue with the new output.
 
 ## Workflow
 
