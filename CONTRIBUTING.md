@@ -2,7 +2,7 @@
 
 trayt is early — the priorities right now, roughly in order:
 
-1. **A real icon.** `resources/tray-icon.png` is a generated flat-color placeholder (see `scripts/generate-placeholder-icon.mjs`). A proper design, plus a monochrome/template variant for Linux panels that recolor tray icons, would help a lot.
+1. **A monochrome/template tray icon variant.** `resources/tray-icon.png` is the real owl mark now, but it's full-color — some Linux panels recolor/invert tray icons and expect a simpler monochrome silhouette variant. Worth checking how it actually looks across a few DEs.
 2. **Packaging polish.** `npm run build:linux` / `build:win` work but haven't been tested across distros (Wayland vs. X11 tray protocols vary) or Windows versions — bug reports with your OS/DE details are useful even without a fix attached.
 3. **Codex CLI support.** Currently parked, not the current milestone's focus — but it's a stub (`src/main/providers/codex.ts`) waiting for someone who has it installed. See [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md).
 

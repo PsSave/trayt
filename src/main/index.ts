@@ -21,6 +21,7 @@ function createPopover(): BrowserWindow {
     resizable: false,
     skipTaskbar: true,
     hasShadow: false, // the shadow is CSS; avoids a rectangular frame on some WMs
+    icon: join(__dirname, '../../resources/icon.png'), // Windows taskbar/alt-tab even with skipTaskbar
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false
