@@ -1,10 +1,9 @@
-// Generates a flat-color placeholder tray icon so the app has something to
-// show before a real icon is designed. Regenerate with: node scripts/generate-placeholder-icon.mjs
+// Generates flat-color placeholder icons so the app has something to show
+// before real ones are designed. Regenerate with: node scripts/generate-placeholder-icon.mjs
 import { deflateSync } from 'node:zlib'
 import { writeFileSync } from 'node:fs'
 
-const SIZE = 32
-// A simple teal square. Swap this whole script out once a real icon exists.
+// A simple teal square. Swap this whole script out once real icons exist.
 const [R, G, B, A] = [0x14, 0xb8, 0xa6, 0xff]
 
 function crc32(buf) {
@@ -32,34 +31,39 @@ function chunk(type, data) {
   return Buffer.concat([len, typeBuf, data, crc])
 }
 
-const ihdr = Buffer.alloc(13)
-ihdr.writeUInt32BE(SIZE, 0)
-ihdr.writeUInt32BE(SIZE, 4)
-ihdr[8] = 8 // bit depth
-ihdr[9] = 6 // color type: RGBA
-ihdr[10] = 0
-ihdr[11] = 0
-ihdr[12] = 0
+function writeSolidSquarePng(size, outPath) {
+  const ihdr = Buffer.alloc(13)
+  ihdr.writeUInt32BE(size, 0)
+  ihdr.writeUInt32BE(size, 4)
+  ihdr[8] = 8 // bit depth
+  ihdr[9] = 6 // color type: RGBA
+  ihdr[10] = 0
+  ihdr[11] = 0
+  ihdr[12] = 0
 
-const raw = Buffer.alloc((SIZE * 4 + 1) * SIZE)
-for (let y = 0; y < SIZE; y++) {
-  const rowStart = y * (SIZE * 4 + 1)
-  raw[rowStart] = 0 // filter: none
-  for (let x = 0; x < SIZE; x++) {
-    const off = rowStart + 1 + x * 4
-    raw[off] = R
-    raw[off + 1] = G
-    raw[off + 2] = B
-    raw[off + 3] = A
+  const raw = Buffer.alloc((size * 4 + 1) * size)
+  for (let y = 0; y < size; y++) {
+    const rowStart = y * (size * 4 + 1)
+    raw[rowStart] = 0 // filter: none
+    for (let x = 0; x < size; x++) {
+      const off = rowStart + 1 + x * 4
+      raw[off] = R
+      raw[off + 1] = G
+      raw[off + 2] = B
+      raw[off + 3] = A
+    }
   }
+
+  const png = Buffer.concat([
+    Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
+    chunk('IHDR', ihdr),
+    chunk('IDAT', deflateSync(raw)),
+    chunk('IEND', Buffer.alloc(0))
+  ])
+
+  writeFileSync(new URL(outPath, import.meta.url), png)
+  console.log(`Wrote ${outPath}`)
 }
 
-const png = Buffer.concat([
-  Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-  chunk('IHDR', ihdr),
-  chunk('IDAT', deflateSync(raw)),
-  chunk('IEND', Buffer.alloc(0))
-])
-
-writeFileSync(new URL('../resources/tray-icon.png', import.meta.url), png)
-console.log('Wrote resources/tray-icon.png')
+writeSolidSquarePng(32, '../resources/tray-icon.png')
+writeSolidSquarePng(512, '../resources/icon.png') // packaging icon (electron-builder)

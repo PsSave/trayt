@@ -3,7 +3,10 @@
   "version": "0.1.0",
   "description": "System tray dashboard for AI coding agent usage (Claude Code, Codex CLI, and more) on Linux and Windows",
   "main": "./out/main/index.js",
-  "author": "trayt contributors",
+  "author": {
+    "name": "trayt contributors",
+    "email": "pedrosviki1265@gmail.com"
+  },
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -37,6 +40,7 @@
   "build": {
     "appId": "com.trayt.app",
     "productName": "trayt",
+    "icon": "resources/icon.png",
     "files": [
       "out/**/*"
     ],
