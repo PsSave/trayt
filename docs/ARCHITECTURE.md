@@ -38,7 +38,7 @@ This boundary exists so that:
 
 See [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md) for a concrete walkthrough.
 
-## How live quota data actually works (Claude Code)
+## How live quota data actually works (Claude Code, Codex CLI)
 
 There is no local file with "percent used / resets at" for Claude Code — `~/.claude/stats-cache.json` is a historical aggregate (tokens/sessions/messages per day), and `~/.claude/policy-limits.json` is org policy toggles, unrelated to usage quota. Both were dead ends.
 
@@ -50,7 +50,17 @@ Trade-off we're accepting: this parses human-readable CLI text output, not a sta
 
 **Fallback:** if the CLI call fails for any reason (not installed, not logged in, timed out, or output didn't parse), the provider falls back to computing today's tokens/sessions/messages from `~/.claude/stats-cache.json`. That fallback is clearly a different, lower-fidelity kind of data (a local historical estimate, not a live quota check) — `UsageSnapshot.source` (`'live' | 'local-estimate'`) exists specifically so the UI can be honest about which one it's showing, and `ProviderRow.tsx` renders each source differently. Don't collapse that distinction to make the UI simpler; a user who thinks they're seeing a live quota when they're actually seeing yesterday's cache would be worse off than the card just saying so.
 
-**Codex CLI:** parked (see README) — no local install was available to check whether it has an equivalent to `/usage`. If you pick this up, look for an interactive slash/status command in Codex CLI first and test whether it also runs non-interactively, the same pattern that worked here — see [ADDING_A_PROVIDER.md](ADDING_A_PROVIDER.md).
+**Codex CLI:** no `/usage`-equivalent print-mode command exists — every subcommand's `--help` was checked, and `codex exec` only runs actual agent turns, not a status readout. What does work: `codex app-server`, Codex CLI's JSON-RPC-over-stdio protocol (normally used by IDE extensions, documented via `codex app-server generate-json-schema`), exposes an `account/rateLimits/read` request. Confirmed live against a real ChatGPT-plan login — it returns the same live rate-limit snapshot the interactive TUI's status line reads from:
+
+```json
+{"rateLimits":{"primary":{"usedPercent":0,"windowDurationMins":300,"resetsAt":1788081000},"secondary":{"usedPercent":0,"windowDurationMins":10080,"resetsAt":1788667800},"planType":"plus", ...}}
+```
+
+`primary` is the 5-hour session window (300 min), `secondary` is the weekly window (10080 min) — the same two-window shape `UsageSnapshot.session`/`week` already models for Claude Code, so no type changes were needed. `resetsAt` is a unix-seconds timestamp (not a pre-formatted string like Claude's), so `src/main/providers/codex.ts` formats it into the same `"Aug 28, 11:50pm (America/Sao_Paulo)"`-style label itself, using the machine's resolved IANA timezone.
+
+`src/main/providers/codex.ts` spawns `codex app-server`, sends `initialize` then `account/rateLimits/read` over its stdin/stdout as newline-delimited JSON-RPC, and kills the child process once it has a response (or after a 15s timeout) — no daemon is left running, and reading rate limits doesn't invoke the model, so this costs no tokens. Same trust posture as the Claude Code provider: this shells out to a CLI the user already authenticated, rather than reading `~/.codex/auth.json`'s stored ChatGPT tokens and hitting an endpoint directly.
+
+Trade-off accepted here: `account/rateLimits/read` isn't documented as a stable public contract the way a CLI flag would be — it's the same protocol IDE extensions use, but Codex CLI could change or remove it in a future version. If that happens, `getUsageFromAppServer()` returns `null` on any malformed/missing response, which surfaces as `status: 'not_installed'` rather than crashing.
 
 ## The popover: a transparent, dynamically-sized HUD card
 
