@@ -17,7 +17,7 @@ Current week (all models): 30% used · resets Aug 30, 8am (America/Sao_Paulo)
 
 O trayt executa esse comando e faz o parse dessas duas linhas — são as janelas reais de 5 horas (rolling) e semanal que a Anthropic aplica de fato, lidas direto da sua conta, não um chute ou um cálculo local nosso. Se essa chamada falhar por qualquer motivo (CLI fora do PATH, não logado, versão antiga sem `/usage`), ele cai pra uma estimativa local baseada no `~/.claude/stats-cache.json` (o próprio cache histórico do Claude Code), pra o card degradar com elegância em vez de ficar em branco. Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pra entender o raciocínio completo, incluindo por que não batemos direto na API da Anthropic.
 
-**Codex CLI** — engavetado por enquanto, não é prioridade no momento atual. Se você usa o Codex CLI e quiser achar o equivalente do `/usage` dele, veja [docs/ADDING_A_PROVIDER.md](docs/ADDING_A_PROVIDER.md) — essa é a melhor primeira contribuição assim que alguém pegar essa frente.
+**Codex CLI** — também ao vivo, dado real da conta. O Codex CLI não tem um comando estilo `/usage` em modo print, mas o `codex app-server` fala JSON-RPC via stdio (o mesmo protocolo que extensões de IDE usam) e expõe `account/rateLimits/read`, que retorna as janelas de 5 horas e semanal que a barra de status do TUI interativo lê. O trayt sobe o `codex app-server`, faz a chamada via stdio e encerra o processo — sem daemon ficando rodando, sem chamada ao modelo. Veja [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) pra entender o raciocínio completo.
 
 ## Stack
 

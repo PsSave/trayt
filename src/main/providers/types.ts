@@ -1,6 +1,6 @@
-import type { UsageSnapshot } from '../../shared/usage'
+import type { QuotaWindow, UsageSnapshot } from '../../shared/usage'
 
-export type { UsageSnapshot }
+export type { QuotaWindow, UsageSnapshot }
 
 /**
  * Contract every agent provider must implement to show up in the tray.
